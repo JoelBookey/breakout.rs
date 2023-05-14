@@ -1,4 +1,5 @@
 use piston_window::*;
+use rodio::{source::Source, Decoder, OutputStream};
 
 fn main() {
     // 9: 5 aspect ratio
@@ -26,6 +27,10 @@ struct App {
 
 impl App {
     fn run(&mut self) {
+        // Get a output stream handle to the default physical sound device
+        let (_stream, stream_handle) = OutputStream::try_default().unwrap();
+        let bounce_file = "pong.mp3";
+
         while let Some(e) = self.window.next() {
             // bounce ball
             if self.ball_pos.0 <= 0.0 || self.ball_pos.0 + 10.0 >= 630.0 {
@@ -43,6 +48,11 @@ impl App {
                 && self.ball_pos.0 <= self.player_pos + 84.0
                 && self.ball_pos.1 + 10.0 >= 320.0
             {
+                let bounce_file_open =
+                    std::io::BufReader::new(std::fs::File::open(&bounce_file).unwrap());
+                let bounce_source = Decoder::new(bounce_file_open).expect("weird");
+                let _ = stream_handle.play_raw(bounce_source.convert_samples());
+
                 if self.ball_pos.1 + 10.0 <= 342.5 {
                     self.ball_speed.1 *= -1.01;
                 }
